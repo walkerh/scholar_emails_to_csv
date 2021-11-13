@@ -81,54 +81,6 @@ python src foo bar
 This reqires either first removing the version harvesting code in `__init__.py`
 or doing enough of a buld to generate the `src/scholaremailstocsv.egg-info` directory.
 
-## Touring the Code
-
-
-```
-$ tree -pugsCa -I .git\|.venv
-.
-├── [-rw-r--r-- hale     staff           1822]  .gitignore
-├── [-rw-r--r-- hale     staff           1071]  LICENSE
-├── [-rw-r--r-- hale     staff           4196]  README.md
-├── [-rw-r--r-- hale     staff             90]  pyproject.toml
-├── [-rw-r--r-- hale     staff           1252]  setup.cfg
-├── [-rw-r--r-- hale     staff            238]  setup.py
-└── [drwxr-xr-x hale     staff            128]  src
-    ├── [-rw-r--r-- hale     staff            300]  __main__.py
-    └── [drwxr-xr-x hale     staff            128]  scholaremailstocsv
-        ├── [-rw-r--r-- hale     staff            604]  __init__.py
-        └── [-rw-r--r-- hale     staff            532]  __main__.py
-
-2 directories, 9 files
-```
-
-### Very Little Code
-
-Most of this repo is either the README, LICENSE, or .gitignore:
-
-```
-$ find . -name .git -prune -o -type f -print | fgrep -v -e .egg -e .pyc -e ./scholaremailstocsv | xargs wc -l
-   21 ./LICENSE
-    3 ./pyproject.toml
-  143 ./README.md
-   10 ./setup.py
-  132 ./.gitignore
-   47 ./setup.cfg
-   17 ./src/scholaremailstocsv/__init__.py
-   29 ./src/scholaremailstocsv/__main__.py
-   14 ./src/__main__.py
-  416 total
-```
-
-### Interesting Files
-
-- `pyproject.toml`: Current standard selection build tools
-- `setup.py`: Almost empty. Only needed to suppor `pip install -e ...`
-- `setup.cfg`: Where *all* of the metadata lives, including version
-- `src/__main__.py`: Only necessary if you want to support running without installing.
-- `src/scholaremailstocsv/__init__.py`: Demonstrates fetching `__version__` from build.
-- `src/scholaremailstocsv/__main__.py`: Top-level script, supports `python -m scholaremailstocsv ...`
-
 ## Cleaning Up
 
 You might want to have a script like this in your toolbox.
