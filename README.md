@@ -2,7 +2,9 @@
 
 ## Introduction
 
-This is a minimal scholaremailstocsv world distribution package.
+Tool to digest multiple Google Scholar alert emails into CSV.
+Take as input a directory of Google Scholar alert emails.
+
 It is runnable in a variety of modes.
 
 What little functionality is here serves to:
