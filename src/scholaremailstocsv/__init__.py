@@ -14,4 +14,4 @@ from importlib.metadata import version as _version
 #     from importlib_metadata import version as _version
 
 # Passing in the distribution name which is not always the package name:
-__version__ = _version("minimalhello")
+__version__ = _version("scholaremailstocsv")

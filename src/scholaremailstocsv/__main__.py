@@ -1,7 +1,7 @@
 """
 By naming the top-level module __main__, it is possible to run this module as
 a script by running:
-`python -m minimalhello [args...]`
+`python -m scholaremailstocsv [args...]`
 """
 
 from sys import argv, path

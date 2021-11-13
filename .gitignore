@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Local files
-/hello*
+/scholaremailstocsv*

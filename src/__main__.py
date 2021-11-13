@@ -6,9 +6,9 @@ This also allows packaging up as a zipapp.
 
 If you do not need this functionality:
   - Remove this file.
-  - Consider moving minimalhello out of src.
+  - Consider moving scholaremailstocsv out of src.
 """
 
-import minimalhello.__main__
+import scholaremailstocsv.__main__
 
-minimalhello.__main__.main()
+scholaremailstocsv.__main__.main()

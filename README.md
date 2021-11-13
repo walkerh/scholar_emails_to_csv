@@ -1,8 +1,8 @@
-# minimal_hello_world
+# scholar_emails_to_csv
 
 ## Introduction
 
-This is a minimal hello world distribution package.
+This is a minimal scholaremailstocsv world distribution package.
 It is runnable in a variety of modes.
 
 What little functionality is here serves to:
@@ -27,8 +27,8 @@ This project skeleton can be run in multiple ways:
 
 `pip install [-e] .`
 
-- Using the entry point: `hello [ args... ]`
-- Executing the module: `python -m minimalhello [ args... ]`
+- Using the entry point: `scholaremailstocsv [ args... ]`
+- Executing the module: `python -m scholaremailstocsv [ args... ]`
 
 ### 2. zipapp
 
@@ -40,24 +40,24 @@ https://docs.python.org/3/library/zipapp.html
 This creates a ZIP file that can be run from Python:
 
 ```bash
-pip install -t build/hello .
-# Creates build/hello.pyz
-python -m zipapp -m minimalhello.__main__:main build/hello
+pip install -t build/scholaremailstocsv .
+# Creates build/scholaremailstocsv.pyz
+python -m zipapp -m scholaremailstocsv.__main__:main build/scholaremailstocsv
 # Any time later:
-python build/hello.pyz [ args... ]
+python build/scholaremailstocsv.pyz [ args... ]
 # If moved:
-python path/to/hello.pyz [ args... ]
+python path/to/scholaremailstocsv.pyz [ args... ]
 ```
 
 Or to build an executable ZIP file:
 
 ```bash
-pip install -t build/hello .
-python -m zipapp -m minimalhello.__main__:main -p '/usr/bin/env python3' -o hello build/hello
+pip install -t build/scholaremailstocsv .
+python -m zipapp -m scholaremailstocsv.__main__:main -p '/usr/bin/env python3' -o scholaremailstocsv build/scholaremailstocsv
 # Any time later:
-./hello [ args... ]
+./scholaremailstocsv [ args... ]
 # If moved:
-path/to/hello [ args... ]
+path/to/scholaremailstocsv [ args... ]
 ```
 
 Note that the resulting ZIP file will require that the `python3` that runs is compatible.
@@ -72,14 +72,14 @@ Under the right circumstances you can run this repo without installing...
 
 ```bash
 python setup.py sdist -d src
-rm src/minimalhello*.tar.gz
+rm src/scholaremailstocsv*.tar.gz
 python src foo bar
 ```
 
 `python src [ args... ]`
 
 This reqires either first removing the version harvesting code in `__init__.py`
-or doing enough of a buld to generate the `src/minimalhello.egg-info` directory.
+or doing enough of a buld to generate the `src/scholaremailstocsv.egg-info` directory.
 
 ## Touring the Code
 
@@ -95,7 +95,7 @@ $ tree -pugsCa -I .git\|.venv
 ├── [-rw-r--r-- hale     staff            238]  setup.py
 └── [drwxr-xr-x hale     staff            128]  src
     ├── [-rw-r--r-- hale     staff            300]  __main__.py
-    └── [drwxr-xr-x hale     staff            128]  minimalhello
+    └── [drwxr-xr-x hale     staff            128]  scholaremailstocsv
         ├── [-rw-r--r-- hale     staff            604]  __init__.py
         └── [-rw-r--r-- hale     staff            532]  __main__.py
 
@@ -107,15 +107,15 @@ $ tree -pugsCa -I .git\|.venv
 Most of this repo is either the README, LICENSE, or .gitignore:
 
 ```
-$ find . -name .git -prune -o -type f -print | fgrep -v -e .egg -e .pyc -e ./hello | xargs wc -l
+$ find . -name .git -prune -o -type f -print | fgrep -v -e .egg -e .pyc -e ./scholaremailstocsv | xargs wc -l
    21 ./LICENSE
     3 ./pyproject.toml
   143 ./README.md
    10 ./setup.py
   132 ./.gitignore
    47 ./setup.cfg
-   17 ./src/minimalhello/__init__.py
-   29 ./src/minimalhello/__main__.py
+   17 ./src/scholaremailstocsv/__init__.py
+   29 ./src/scholaremailstocsv/__main__.py
    14 ./src/__main__.py
   416 total
 ```
@@ -126,8 +126,8 @@ $ find . -name .git -prune -o -type f -print | fgrep -v -e .egg -e .pyc -e ./hel
 - `setup.py`: Almost empty. Only needed to suppor `pip install -e ...`
 - `setup.cfg`: Where *all* of the metadata lives, including version
 - `src/__main__.py`: Only necessary if you want to support running without installing.
-- `src/minimalhello/__init__.py`: Demonstrates fetching `__version__` from build.
-- `src/minimalhello/__main__.py`: Top-level script, supports `python -m minimalhello ...`
+- `src/scholaremailstocsv/__init__.py`: Demonstrates fetching `__version__` from build.
+- `src/scholaremailstocsv/__main__.py`: Top-level script, supports `python -m scholaremailstocsv ...`
 
 ## Cleaning Up
 
