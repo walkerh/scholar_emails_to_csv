@@ -4,6 +4,7 @@ a script by running:
 `python -m scholaremailstocsv [args...]`
 """
 
+from pathlib import Path
 from sys import argv, path
 from textwrap import dedent
 
@@ -11,9 +12,11 @@ from . import __version__
 
 
 def main():
+    cwd = str(Path().absolute())
     print(
         dedent(
             f"""\
+            {cwd=}
             {__package__=} (v{__version__})
             {__name__=} @ {__file__}
 
