@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+TERMS='-name .eggs -prune -o -name .pytest_cache -prune -o -name __pycache__ -prune'
+TERMS="$TERMS -o -name build -prune -o -name dist -prune -o -name out -prune"
+find . -type d \( $TERMS -o -name \*.egg-info -prune \) -exec rm -rf "$@" {} \; -prune

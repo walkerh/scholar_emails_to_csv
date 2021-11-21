@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+./clean
+rm -rf out
+
+# Assemble everything into build directory:
+pip install --no-compile -t build/scholaremailstocsv .
+
+# Creates build/scholaremailstocsv.pyz:
+python -m zipapp -m scholaremailstocsv.__main__:main build/scholaremailstocsv
+
+mkdir -p out
+cp -p launch-shim.command build/scholaremailstocsv.pyz out/
