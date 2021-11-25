@@ -13,3 +13,4 @@ mkdir -p out
 cp -p launch-shim.command build/scholaremailstocsv.pyz out/
 
 rm -rf src/*.egg-info
+rm -rf build
