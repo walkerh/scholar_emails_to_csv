@@ -14,18 +14,18 @@ from .email_processor import process_emails
 
 def main():
     cwd = str(Path().resolve())
-    here = Path(argv[0]).resolve().parent
+    here = Path(argv[0]).parent.resolve()
     while not here.is_dir():
         here = here.parent
     print(
         dedent(
             f"""\
             {cwd=}
+            {executable=}
             {__package__=} (v{__version__})
             {__name__=} @ {__file__}
             {here=}
 
-            {executable=}
 
             {argv=}
             """  # This f-string syntax requires 3.8+
