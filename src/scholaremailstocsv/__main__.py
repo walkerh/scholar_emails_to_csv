@@ -5,7 +5,7 @@ a script by running:
 """
 
 from pathlib import Path
-from sys import argv, path
+from sys import argv, executable, path
 from textwrap import dedent
 
 from . import __version__
@@ -20,12 +20,12 @@ def main():
         dedent(
             f"""\
             {cwd=}
+            {executable=}
             {__package__=} (v{__version__})
             {__name__=} @ {__file__}
             {here=}
-
             {argv=}
-            """  # This f-string syntax requires 3.8+
+            """
         )
     )
     for p in path:
