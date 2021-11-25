@@ -4,7 +4,7 @@ from subprocess import run
 from time import sleep
 import sys
 
-me = Path(__file__)
+me = Path(__file__).resolve()
 here = me.parent
 app = str(here / "scholaremailstocsv.pyz")
 command = [
@@ -14,4 +14,4 @@ command = [
 ]
 print(command)
 run(command)
-# input("press return to exit")
+input("press return to exit")
