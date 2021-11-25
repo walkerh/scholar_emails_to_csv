@@ -13,7 +13,7 @@ from . import __version__
 
 def main():
     cwd = str(Path().resolve())
-    here = Path(__file__).resolve().parent
+    here = Path(argv[0]).parent.resolve()
     while not here.is_dir():
         here = here.parent
     print(
