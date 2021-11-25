@@ -11,3 +11,5 @@ python -m zipapp -m scholaremailstocsv.__main__:main build/scholaremailstocsv
 
 mkdir -p out
 cp -p launch-shim.command build/scholaremailstocsv.pyz out/
+
+rm -rf src/*.egg-info
