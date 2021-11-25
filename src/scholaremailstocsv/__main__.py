@@ -12,13 +12,17 @@ from . import __version__
 
 
 def main():
-    cwd = str(Path().absolute())
+    cwd = str(Path().resolve())
+    here = Path(__file__).resolve().parent
+    while not here.is_dir():
+        here = here.parent
     print(
         dedent(
             f"""\
             {cwd=}
             {__package__=} (v{__version__})
             {__name__=} @ {__file__}
+            {here=}
 
             {argv=}
             """  # This f-string syntax requires 3.8+
