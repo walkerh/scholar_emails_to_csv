@@ -5,15 +5,16 @@ a script by running:
 """
 
 from pathlib import Path
-from sys import argv, path
+from sys import argv, executable, path
 from textwrap import dedent
 
 from . import __version__
+from .email_processor import process_emails
 
 
 def main():
     cwd = str(Path().resolve())
-    here = Path(__file__).resolve().parent
+    here = Path(argv[0]).resolve().parent
     while not here.is_dir():
         here = here.parent
     print(
@@ -24,12 +25,15 @@ def main():
             {__name__=} @ {__file__}
             {here=}
 
+            {executable=}
+
             {argv=}
             """  # This f-string syntax requires 3.8+
         )
     )
-    for p in path:
-        print(p)
+    # for p in path:
+    #     print(p)
+    process_emails(here)
 
 
 if __name__ == "__main__":
