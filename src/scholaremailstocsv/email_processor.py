@@ -4,6 +4,7 @@ from email import parser, policy
 from pathlib import Path
 from pprint import pprint as pp
 from string import ascii_lowercase
+from typing import Iterator
 
 from addict import Dict
 from bs4 import BeautifulSoup, element
@@ -38,18 +39,25 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
     for email_path in new_email_paths:
         print("starting", email_path)
         citations, query = parse_email(email_path)
+        print(type(query))
     pass
 
 
-def parse_email(email_path: Path) -> tuple[list[tuple], tuple]:
+ET = element.Tag
+CitationType = tuple[ET, ET, ET]
+QueryType = ET
+
+
+def parse_email(email_path: Path) -> tuple[list[CitationType], QueryType]:
     with email_path.open("rb") as fin:
         msg = eml_parser.parse(fin)
-        b = msg.get_body()
-        c = b.get_content()
-        email_path.with_suffix(".html").write_text(c)
-        # elements = list(generate_elements(c))
+        body = msg.get_body()
+        content = body.get_content()
+        print(type(content))
+        email_path.with_suffix(".html").write_text(content)
+        # elements = list(generate_elements(content))
         # pp([e.name for e in elements])
-        blocks = list(generate_blocks(c))
+        blocks = list(generate_blocks(content))
         # pp([(code, e.name) for code, e, *_ in blocks])
         *citation_blocks, query_block = blocks
         if any(b[0] != "citation" for b in citation_blocks):
@@ -66,7 +74,7 @@ def parse_email(email_path: Path) -> tuple[list[tuple], tuple]:
 eml_parser = parser.BytesParser(policy=policy.default)
 
 
-def generate_blocks(content):
+def generate_blocks(content: str) -> Iterator:
     element_iter = generate_elements(content)
     while True:
         try:
