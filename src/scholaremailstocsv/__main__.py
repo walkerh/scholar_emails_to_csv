@@ -25,10 +25,8 @@ def main():
             {__package__=} (v{__version__})
             {__name__=} @ {__file__}
             {here=}
-
-
             {argv=}
-            """  # This f-string syntax requires 3.8+
+            """
         )
     )
     # for p in path:
