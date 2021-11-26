@@ -1,9 +1,11 @@
 import re
-from datetime import datetime, time
+from dataclasses import asdict, astuple, dataclass
+from datetime import datetime
 from email import parser, policy
 from pathlib import Path
 from pprint import pprint as pp
 from string import ascii_lowercase
+from types import EllipsisType
 from typing import Iterator
 
 from addict import Dict
@@ -37,45 +39,57 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
     )
     # print("\n".join(str(p) for p in new_email_paths))
     for email_path in new_email_paths:
+        print()
         print("starting", email_path)
         citations, query = parse_email(email_path)
         print(type(query))
     pass
 
 
-ET = element.Tag
-CitationType = tuple[ET, ET, ET]
-QueryType = ET
+Tag = element.Tag
+CitationType = tuple[Tag, Tag, Tag]
+QueryType = Tag
 
 
-def parse_email(email_path: Path) -> tuple[list[CitationType], QueryType]:
+class Block:
+    "Just a common ancestor for CitationBlocks and QueryBlocks."
+
+
+@dataclass
+class Citation(Block):
+    title_block: Tag
+    authors_block: Tag
+    blurb_block: Tag
+
+
+@dataclass
+class Query(Block):
+    payload: Tag
+
+
+def parse_email(email_path: Path) -> tuple[list[Citation], Query]:
     with email_path.open("rb") as fin:
         msg = eml_parser.parse(fin)
         body = msg.get_body()
         content = body.get_content()
-        print(type(content))
-        email_path.with_suffix(".html").write_text(content)
-        # elements = list(generate_elements(content))
+        soup = BeautifulSoup(content, "html.parser")
+        # elements = list(generate_elements(soup))
         # pp([e.name for e in elements])
-        blocks = list(generate_blocks(content))
-        # pp([(code, e.name) for code, e, *_ in blocks])
-        *citation_blocks, query_block = blocks
-        if any(b[0] != "citation" for b in citation_blocks):
-            raise ValueError(citation_blocks)
-        if query_block[0] != "query":
-            raise ValueError(query_block)  # TODO
-        assert all((len(cb) == 4) for cb in citation_blocks)
-        assert len(query_block) == 2, query_block
-        citations = [cb[1:] for cb in citation_blocks]
-        query = query_block[1]
+        email_path.with_suffix(".html").write_text(soup.prettify())
+        *citations, query = generate_blocks(soup)
+        pp([type(b) for b in citations])
+        if not all(isinstance(b, Citation) for b in citations):
+            raise ValueError(citations)
+        if not isinstance(query, Query):
+            raise ValueError(query)
         return citations, query
 
 
 eml_parser = parser.BytesParser(policy=policy.default)
 
 
-def generate_blocks(content: str) -> Iterator:
-    element_iter = generate_elements(content)
+def generate_blocks(soup: BeautifulSoup) -> Iterator[Block]:
+    element_iter = generate_elements(soup)
     while True:
         try:
             first = next(element_iter)
@@ -88,10 +102,11 @@ def generate_blocks(content: str) -> Iterator:
                 third, fourth = next(element_iter), next(element_iter)
                 assert third.name == "div"
                 assert fourth.name == "br"
-                yield "citation", first, second, third
+                yield Citation(first, second, third)
             elif first.name == "div":
                 assert second.name == "p"
-                yield "query", second
+                yield Query(second)
+                return  # Stop parsing.
         elif first.name == "p":
             pass  # Ignore: just a restatement of the query with " - new results".
         else:
@@ -102,8 +117,7 @@ def generate_blocks(content: str) -> Iterator:
             print()
 
 
-def generate_elements(content):
-    soup = BeautifulSoup(content, "html.parser")
+def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
     next_element = soup.h3
     while next_element:
         current_element = next_element
