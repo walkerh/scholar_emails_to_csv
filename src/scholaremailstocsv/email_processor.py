@@ -42,7 +42,6 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
         print()
         print("starting", email_path)
         citations, query = parse_email(email_path)
-        print(type(query))
     pass
 
 
@@ -76,8 +75,11 @@ def parse_email(email_path: Path) -> tuple[list[Citation], Query]:
         # elements = list(generate_elements(soup))
         # pp([e.name for e in elements])
         email_path.with_suffix(".html").write_text(soup.prettify())
+        citations: list[Citation]
+        query: Query
         *citations, query = generate_blocks(soup)
         pp([type(b) for b in citations])
+        print(type(query))
         if not all(isinstance(b, Citation) for b in citations):
             raise ValueError(citations)
         if not isinstance(query, Query):
