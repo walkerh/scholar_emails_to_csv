@@ -37,7 +37,6 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
         email_path.rename(new_batch / email_path.name)
         for email_path in original_email_paths
     )
-    # print("\n".join(str(p) for p in new_email_paths))
     for email_path in new_email_paths:
         print()
         print("starting", email_path)
@@ -72,8 +71,8 @@ def parse_email(email_path: Path) -> tuple[list[Citation], Query]:
         body = msg.get_body()
         content = body.get_content()
         soup = BeautifulSoup(content, "html.parser")
-        # elements = list(generate_elements(soup))
-        # pp([e.name for e in elements])
+        elements = list(generate_elements(soup))
+        print([e.name for e in elements])
         email_path.with_suffix(".html").write_text(soup.prettify())
         citations: list[Citation]
         query: Query
