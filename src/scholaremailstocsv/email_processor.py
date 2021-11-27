@@ -41,6 +41,7 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
         print()
         print("starting", email_path)
         citations, query = parse_email(email_path)
+        print(query.text)
     pass
 
 
@@ -61,6 +62,10 @@ class Citation(Block):
 @dataclass
 class Query(Block):
     payload: Tag
+
+    @property
+    def text(self):
+        return self.payload.a.text.strip().strip("[]")
 
 
 def parse_email(email_path: Path) -> tuple[list[Citation], Query]:
