@@ -5,12 +5,12 @@ from email import parser, policy
 from pathlib import Path
 from pprint import pprint as pp
 from string import ascii_lowercase
-from types import EllipsisType
 from typing import Iterator
 
 from addict import Dict
 from bs4 import BeautifulSoup, element
 from requests import get, head
+from yarl import URL
 
 
 def process_emails(here: Path) -> None:
@@ -80,10 +80,14 @@ class Citation(Block):
     def url(self) -> str:
         bad_url = self.title_block.a["href"]
         r1 = head(bad_url)
-        require(r1.status_code, 302)
+        require(r1, 302)
         google_url = r1.headers["Location"]
+        url = URL(google_url)
+        good_url = url.query["url"]
+        return str(good_url)
+        return google_url
         r2 = get(google_url)
-        require(r2.status_code, 200)
+        require(r2, 200)
         soup = BeautifulSoup(r2.content, "html.parser")
         good_url = soup.head.noscript.meta["content"].split("=")[1]
         return good_url
@@ -97,9 +101,12 @@ class Citation(Block):
         return re.sub(r"\s+", " ", self.blurb_block.text).strip()
 
 
-def require(expression, value) -> None:
-    if expression != value:
-        raise ValueError(expression)
+def require(response, value) -> None:
+    if response.status_code != value:
+        print(response)
+        print(response.headers)
+        print(vars(response))
+        raise ValueError(response)
 
 
 def clean_url(url: str) -> str:
