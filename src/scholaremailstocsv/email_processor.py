@@ -44,7 +44,9 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
         print("Q:", query.text)
         for c in citations:
             print("*", c.title)
-            # print("-", c.url)
+            print(" U:", c.url)
+            print(" A:", c.authors)
+            print(" =:", c.blurb)
     pass
 
 
@@ -85,6 +87,14 @@ class Citation(Block):
         soup = BeautifulSoup(r2.content, "html.parser")
         good_url = soup.head.noscript.meta["content"].split("=")[1]
         return good_url
+
+    @property
+    def authors(self):
+        return self.authors_block.text
+
+    @property
+    def blurb(self) -> str:
+        return re.sub(r"\s+", " ", self.blurb_block.text).strip()
 
 
 def require(expression, value) -> None:
