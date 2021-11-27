@@ -41,7 +41,10 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
         print()
         print("starting", email_path)
         citations, query = parse_email(email_path)
-        print(query.text)
+        print("Q:", query.text)
+        for c in citations:
+            print("*", c.title)
+            # print("-", c.url)
     pass
 
 
@@ -53,19 +56,44 @@ class Block:
 
 
 @dataclass
+class Query(Block):
+    payload: Tag
+
+    @property
+    def text(self) -> str:
+        return self.payload.a.text.strip().strip("[]")
+
+
+@dataclass
 class Citation(Block):
     title_block: Tag
     authors_block: Tag
     blurb_block: Tag
 
-
-@dataclass
-class Query(Block):
-    payload: Tag
+    @property
+    def title(self) -> str:
+        return re.sub(r"\s+", " ", self.title_block.a.text).strip()
 
     @property
-    def text(self):
-        return self.payload.a.text.strip().strip("[]")
+    def url(self) -> str:
+        bad_url = self.title_block.a["href"]
+        r1 = head(bad_url)
+        require(r1.status_code, 302)
+        google_url = r1.headers["Location"]
+        r2 = get(google_url)
+        require(r2.status_code, 200)
+        soup = BeautifulSoup(r2.content, "html.parser")
+        good_url = soup.head.noscript.meta["content"].split("=")[1]
+        return good_url
+
+
+def require(expression, value) -> None:
+    if expression != value:
+        raise ValueError(expression)
+
+
+def clean_url(url: str) -> str:
+    pass  # TODO
 
 
 def parse_email(email_path: Path) -> tuple[list[Citation], Query]:
