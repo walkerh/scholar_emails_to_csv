@@ -1,5 +1,7 @@
+from os import sep
 import re
-from dataclasses import asdict, astuple, dataclass
+from csv import DictWriter
+from dataclasses import asdict, astuple, dataclass, fields
 from datetime import datetime
 from email import parser, policy, utils
 from pathlib import Path
@@ -34,8 +36,14 @@ def get_new_batch_dir(batches: Path, timestamp: str) -> Path:
 
 def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
     new_email_paths = move_emails(original_email_paths, new_batch)
-    parse_emails(new_email_paths)
-    pass
+    results = list(parse_emails(new_email_paths))
+    output_csv_path = new_batch / f"{new_batch.name}.csv"
+    output_fields = [f.name for f in fields(CitationRecord)]
+    with output_csv_path.open("w", newline="") as fout:
+        writer = DictWriter(fout, output_fields)
+        writer.writeheader()
+        for result in results:
+            writer.writerow(asdict(result))
 
 
 def move_emails(original_email_paths, new_batch):
@@ -49,7 +57,7 @@ def move_emails(original_email_paths, new_batch):
 @dataclass
 class CitationRecord:
     email_file_name: str
-    email_datetime: str
+    email_timestamp: str
     query: str
     title: str
     url: str
@@ -62,12 +70,22 @@ def parse_emails(new_email_paths: list[Path]) -> Iterator[CitationRecord]:
         print()
         print("starting", email_path)
         citations, query, email_datetime = parse_email(email_path)
+        email_timestamp = email_datetime.astimezone().isoformat(sep=" ")[:19]
         print("Q:", query.text)
         for c in citations:
             print("*", c.title)
             print(" U:", c.url)
             print(" A:", c.authors)
             print(" =:", c.blurb)
+            yield CitationRecord(
+                email_file_name=email_path.name,
+                email_timestamp=email_timestamp,
+                query=query.text,
+                title=c.title,
+                url=c.url,
+                authors=c.authors,
+                blurb=c.blurb,
+            )
 
 
 Tag = element.Tag
