@@ -1,7 +1,7 @@
 import re
 from dataclasses import asdict, astuple, dataclass
 from datetime import datetime
-from email import parser, policy
+from email import parser, policy, utils
 from pathlib import Path
 from pprint import pprint as pp
 from string import ascii_lowercase
@@ -33,21 +33,41 @@ def get_new_batch_dir(batches: Path, timestamp: str) -> Path:
 
 
 def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
+    new_email_paths = move_emails(original_email_paths, new_batch)
+    parse_emails(new_email_paths)
+    pass
+
+
+def move_emails(original_email_paths, new_batch):
     new_email_paths = sorted(
         email_path.rename(new_batch / email_path.name)
         for email_path in original_email_paths
     )
+    return new_email_paths
+
+
+@dataclass
+class CitationRecord:
+    email_file_name: str
+    email_datetime: str
+    query: str
+    title: str
+    url: str
+    authors: str
+    blurb: str
+
+
+def parse_emails(new_email_paths: list[Path]) -> Iterator[CitationRecord]:
     for email_path in new_email_paths:
         print()
         print("starting", email_path)
-        citations, query = parse_email(email_path)
+        citations, query, email_datetime = parse_email(email_path)
         print("Q:", query.text)
         for c in citations:
             print("*", c.title)
             print(" U:", c.url)
             print(" A:", c.authors)
             print(" =:", c.blurb)
-    pass
 
 
 Tag = element.Tag
@@ -79,18 +99,7 @@ class Citation(Block):
     @property
     def url(self) -> str:
         bad_url = self.title_block.a["href"]
-        r1 = head(bad_url)
-        require(r1, 302)
-        google_url = r1.headers["Location"]
-        url = URL(google_url)
-        good_url = url.query["url"]
-        return str(good_url)
-        return google_url
-        r2 = get(google_url)
-        require(r2, 200)
-        soup = BeautifulSoup(r2.content, "html.parser")
-        good_url = soup.head.noscript.meta["content"].split("=")[1]
-        return good_url
+        return clean_url(bad_url)
 
     @property
     def authors(self):
@@ -109,29 +118,50 @@ def require(response, value) -> None:
         raise ValueError(response)
 
 
-def clean_url(url: str) -> str:
-    pass  # TODO
+def clean_url(bad_url: str) -> str:
+    r1 = head(bad_url)
+    require(r1, 302)
+    google_url = r1.headers["Location"]
+    url = URL(google_url)
+    good_url = url.query["url"]
+    return str(good_url)
+    return google_url
+    r2 = get(google_url)
+    require(r2, 200)
+    soup = BeautifulSoup(r2.content, "html.parser")
+    good_url = soup.head.noscript.meta["content"].split("=")[1]
+    return good_url
 
 
-def parse_email(email_path: Path) -> tuple[list[Citation], Query]:
+def parse_email(email_path: Path) -> tuple[list[Citation], Query, datetime]:
     with email_path.open("rb") as fin:
         msg = eml_parser.parse(fin)
-        body = msg.get_body()
-        content = body.get_content()
-        soup = BeautifulSoup(content, "html.parser")
-        elements = list(generate_elements(soup))
-        print([e.name for e in elements])
-        email_path.with_suffix(".html").write_text(soup.prettify())
-        citations: list[Citation]
-        query: Query
-        *citations, query = generate_blocks(soup)
-        pp([type(b) for b in citations])
-        print(type(query))
-        if not all(isinstance(b, Citation) for b in citations):
-            raise ValueError(citations)
-        if not isinstance(query, Query):
-            raise ValueError(query)
-        return citations, query
+    # dump(msg, "Date")
+    # dump(msg, "From")
+    # dump(msg, "To")
+    # dump(msg, "Subject")
+    email_datetime = utils.parsedate_to_datetime(msg["Date"])
+    body = msg.get_body()
+    content = body.get_content()
+    soup = BeautifulSoup(content, "html.parser")
+    elements = list(generate_elements(soup))
+    print([e.name for e in elements])
+    email_path.with_suffix(".html").write_text(soup.prettify())
+    citations: list[Citation]
+    query: Query
+    *citations, query = generate_blocks(soup)
+    pp([type(b) for b in citations])
+    print(type(query))
+    if not all(isinstance(b, Citation) for b in citations):
+        raise ValueError(citations)
+    if not isinstance(query, Query):
+        raise ValueError(query)
+    return citations, query, email_datetime
+
+
+def dump(msg, header):
+    value = msg[header]
+    print(f"{header}: ({type(value)}) {value}")
 
 
 eml_parser = parser.BytesParser(policy=policy.default)
