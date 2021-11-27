@@ -45,8 +45,6 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
 
 
 Tag = element.Tag
-CitationType = tuple[Tag, Tag, Tag]
-QueryType = Tag
 
 
 class Block:
