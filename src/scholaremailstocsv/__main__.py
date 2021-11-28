@@ -9,6 +9,7 @@ from sys import argv, executable, path
 from textwrap import dedent
 
 from . import __version__
+from .email_processor import process_emails
 
 
 def main():
@@ -30,6 +31,7 @@ def main():
     )
     for p in path:
         print(p)
+    process_emails(here)
 
 
 if __name__ == "__main__":
