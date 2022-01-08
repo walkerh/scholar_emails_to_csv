@@ -128,19 +128,15 @@ class Citation(Block):
         return re.sub(r"\s+", " ", self.blurb_block.text).strip()
 
 
-def require(response, value) -> None:
-    if response.status_code != value:
-        print(response)
-        print(response.headers)
-        raise ValueError(response)
-
-
 def clean_url(bad_url: str) -> str:
     u = URL(bad_url)
     while u.host != "scholar.google.com":
-        r1 = head(str(u))
-        require(r1, 302)
-        u = URL(r1.headers["Location"])
+        response = head(str(u))
+        if response.status_code != 302:
+            print(response)
+            print(response.headers)
+            raise ValueError(response)
+        u = URL(response.headers["Location"])
     assert u.host == "scholar.google.com", str(u)
     good_url = u.query["url"]
     return str(good_url)
