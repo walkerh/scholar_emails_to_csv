@@ -132,23 +132,18 @@ def require(response, value) -> None:
     if response.status_code != value:
         print(response)
         print(response.headers)
-        print(vars(response))
         raise ValueError(response)
 
 
 def clean_url(bad_url: str) -> str:
-    r1 = head(bad_url)
-    require(r1, 302)
-    google_url = r1.headers["Location"]
-    url = URL(google_url)
-    good_url = url.query["url"]
+    u = URL(bad_url)
+    while u.host != "scholar.google.com":
+        r1 = head(str(u))
+        require(r1, 302)
+        u = URL(r1.headers["Location"])
+    assert u.host == "scholar.google.com", str(u)
+    good_url = u.query["url"]
     return str(good_url)
-    return google_url
-    r2 = get(google_url)
-    require(r2, 200)
-    soup = BeautifulSoup(r2.content, "html.parser")
-    good_url = soup.head.noscript.meta["content"].split("=")[1]
-    return good_url
 
 
 def parse_email(email_path: Path) -> tuple[list[Citation], Query, datetime]:
