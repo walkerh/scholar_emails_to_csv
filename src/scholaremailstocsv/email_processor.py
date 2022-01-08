@@ -161,6 +161,11 @@ def parse_email(email_path: Path) -> tuple[list[Citation], Query, datetime]:
     email_datetime = utils.parsedate_to_datetime(msg["Date"])
     body = msg.get_body()
     html_content = body.get_content()
+    citations, query = parse_html(email_path, html_content)
+    return citations, query, email_datetime
+
+
+def parse_html(email_path, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     elements = list(generate_elements(soup))
     print([e.name for e in elements])
@@ -174,7 +179,7 @@ def parse_email(email_path: Path) -> tuple[list[Citation], Query, datetime]:
         raise ValueError(citations)
     if not isinstance(query, Query):
         raise ValueError(query)
-    return citations, query, email_datetime
+    return citations, query
 
 
 def dump(msg, header):
