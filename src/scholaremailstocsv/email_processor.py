@@ -145,10 +145,6 @@ def clean_url(bad_url: str) -> str:
 def parse_email(email_path: Path) -> tuple[list[Citation], Query, datetime]:
     with email_path.open("rb") as fin:
         msg = eml_parser.parse(fin)
-    # dump(msg, "Date")
-    # dump(msg, "From")
-    # dump(msg, "To")
-    # dump(msg, "Subject")
     email_datetime = utils.parsedate_to_datetime(msg["Date"])
     body = msg.get_body()
     html_content = body.get_content()
@@ -171,11 +167,6 @@ def parse_html(email_path, html_content):
     if not isinstance(query, Query):
         raise ValueError(query)
     return citations, query
-
-
-def dump(msg, header):
-    value = msg[header]
-    print(f"{header}: ({type(value)}) {value}")
 
 
 eml_parser = parser.BytesParser(policy=policy.default)
