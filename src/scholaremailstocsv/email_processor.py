@@ -10,13 +10,16 @@ from string import ascii_lowercase
 from typing import Iterator
 
 from bs4 import BeautifulSoup, element
+from extract_msg import openMsg
 from requests import head
+from rtfparse.parser import Rtf_Parser
+from rtfparse.renderers import de_encapsulate_html
 from yarl import URL
 
 
 def process_emails(here: Path) -> None:
     assert here.is_dir(), here
-    original_email_paths = list(here.glob("*.eml"))
+    original_email_paths = list(here.glob("*.eml")) + list(here.glob("*.msg"))
     batches = here / "batches"
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H%M")
@@ -142,13 +145,34 @@ def clean_url(bad_url: str) -> str:
 
 
 def parse_email(email_path: Path) -> tuple[list[Citation], Query, datetime]:
-    with email_path.open("rb") as fin:
-        msg = eml_parser.parse(fin)
-    email_datetime = utils.parsedate_to_datetime(msg["Date"])
-    body = msg.get_body()
-    html_content = body.get_content()
+    if email_path.suffix == ".eml":
+        with email_path.open("rb") as fin:
+            msg = eml_parser.parse(fin)
+        email_datetime_str = msg["Date"]
+        body = msg.get_body()
+        html_content = body.get_content()
+    else:
+        email_datetime_str, html_content = parse_msg_file(email_path)
+    email_datetime = utils.parsedate_to_datetime(email_datetime_str)
     citations, query = parse_html(email_path, html_content)
     return citations, query, email_datetime
+
+
+def parse_msg_file(email_path: Path) -> tuple[str, str]:
+    assert email_path.suffix == ".msg", email_path
+    msg = openMsg(str(email_path))
+    email_datetime_str = msg.date
+    rtf_encapsulated_html = msg.rtfBody
+    rtf_path = email_path.with_suffix(".rtf")
+    rtf_path.write_bytes(rtf_encapsulated_html)
+    raw_html_path = email_path.with_suffix(".rtf.html")
+    parser = Rtf_Parser(rtf_path=rtf_path)
+    parsed = parser.parse_file()
+    renderer = de_encapsulate_html.De_encapsulate_HTML()
+    with open(raw_html_path, mode="w", encoding="utf-8") as html_file:
+        renderer.render(parsed, html_file)
+    html_content = raw_html_path.read_text(encoding="utf-8")
+    return email_datetime_str, html_content
 
 
 def parse_html(email_path, html_content):
