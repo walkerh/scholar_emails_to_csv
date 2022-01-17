@@ -1,7 +1,7 @@
 from os import sep
 import re
 from csv import DictWriter
-from dataclasses import asdict, astuple, dataclass, fields
+from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from email import parser, policy, utils
 from pathlib import Path
@@ -9,9 +9,8 @@ from pprint import pprint as pp
 from string import ascii_lowercase
 from typing import Iterator
 
-from addict import Dict
 from bs4 import BeautifulSoup, element
-from requests import get, head
+from requests import head
 from yarl import URL
 
 
