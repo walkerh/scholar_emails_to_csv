@@ -225,7 +225,10 @@ def generate_blocks(soup: BeautifulSoup) -> Iterator[Block]:
 
 
 def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
-    next_element = soup.h3
+    first_a_tag = soup.find(class_="gse_alrt_title")
+    next_element = first_a_tag.parent
+    if not next_element.name == "h3":
+        raise ValueError(next_element)
     while next_element:
         current_element = next_element
         if current_element.name == "p" and current_element.a:
