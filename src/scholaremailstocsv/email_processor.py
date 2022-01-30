@@ -179,7 +179,7 @@ def parse_html(email_path, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     elements = list(generate_elements(soup))
     print([e.name for e in elements])
-    email_path.with_suffix(".html").write_text(soup.prettify())
+    email_path.with_suffix(".html").write_text(soup.prettify(), encoding="utf-8")
     citations: list[Citation]
     query: Query
     *citations, query = generate_blocks(soup)
