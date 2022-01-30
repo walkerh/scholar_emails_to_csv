@@ -235,7 +235,6 @@ def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
                 next_element = current_element.next_sibling
             except:
                 next_element = None
-        t = type(current_element)
-        if t is not element.Tag or current_element.table:
+        if type(current_element) is not element.Tag or current_element.table:
             continue
         yield current_element
