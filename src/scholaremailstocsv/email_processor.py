@@ -237,4 +237,6 @@ def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
                 next_element = None
         if type(current_element) is not element.Tag or current_element.table:
             continue
+        if not current_element.text.strip():
+            continue
         yield current_element
