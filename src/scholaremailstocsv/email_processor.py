@@ -202,20 +202,15 @@ def generate_blocks(soup: BeautifulSoup) -> Iterator[Block]:
             first = next(element_iter)
         except StopIteration:
             return
-        if first.name in ("h3", "div"):
+        if first.name == "h3":
             second = next(element_iter)
-            if first.name == "h3":
-                assert second.name == "div"
-                third, fourth = next(element_iter), next(element_iter)
-                assert third.name == "div"
-                assert fourth.name == "br"
-                yield Citation(first, second, third)
-            elif first.name == "div":
-                assert second.name == "p"
-                yield Query(second)
-                return  # Stop parsing.
+            assert second.name == "div"
+            third = next(element_iter)
+            assert third.name == "div"
+            yield Citation(first, second, third)
         elif first.name == "p":
-            pass  # Ignore: just a restatement of the query with " - new results".
+            yield Query(first)
+            return  # Stop parsing.
         else:
             print("mystery element")
             print(first)
@@ -240,6 +235,7 @@ def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
                 next_element = None
         if type(current_element) is not element.Tag or current_element.table:
             continue
-        if not current_element.text.strip():
+        text = current_element.text
+        if not text.strip():
             continue
         yield current_element
