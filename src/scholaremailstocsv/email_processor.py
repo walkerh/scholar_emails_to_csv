@@ -227,8 +227,12 @@ def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
         raise ValueError(next_element)
     while next_element:
         current_element = next_element
-        if current_element.name == "p" and current_element.a:
-            next_element = None
+        if current_element.name == "p":
+            if current_element.a:
+                next_element = None
+            else:
+                next_element = current_element.next_sibling
+                continue
         else:
             try:
                 next_element = current_element.next_sibling
