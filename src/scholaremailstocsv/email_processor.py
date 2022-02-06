@@ -7,7 +7,7 @@ from email import parser, policy, utils
 from pathlib import Path
 from pprint import pprint as pp
 from string import ascii_lowercase
-from typing import Iterator
+from typing import Iterable, Iterator
 
 from bs4 import BeautifulSoup, element
 from extract_msg import openMsg
@@ -182,7 +182,7 @@ def parse_html(email_path, html_content):
     email_path.with_suffix(".html").write_text(soup.prettify(), encoding="utf-8")
     citations: list[Citation]
     query: Query
-    *citations, query = generate_blocks(soup)
+    *citations, query = generate_blocks(elements)
     pp([type(b) for b in citations])
     print(type(query))
     if not all(isinstance(b, Citation) for b in citations):
@@ -195,8 +195,8 @@ def parse_html(email_path, html_content):
 eml_parser = parser.BytesParser(policy=policy.default)
 
 
-def generate_blocks(soup: BeautifulSoup) -> Iterator[Block]:
-    element_iter = generate_elements(soup)
+def generate_blocks(elements: Iterable[Tag]) -> Iterator[Block]:
+    element_iter = iter(elements)
     while True:
         try:
             first = next(element_iter)
@@ -217,6 +217,7 @@ def generate_blocks(soup: BeautifulSoup) -> Iterator[Block]:
             print()
             print(first.parent.prettify())
             print()
+            raise ValueError
 
 
 def generate_elements(soup: BeautifulSoup) -> Iterator[Tag]:
