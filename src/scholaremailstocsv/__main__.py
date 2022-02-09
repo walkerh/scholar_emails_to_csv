@@ -7,6 +7,7 @@ a script by running:
 from pathlib import Path
 from sys import argv, executable, path
 from textwrap import dedent
+from traceback import print_exc
 
 from . import __version__
 from .email_processor import process_emails
@@ -31,7 +32,11 @@ def main():
     )
     for p in path:
         print(p)
-    process_emails(here)
+    try:
+        process_emails(here)
+    except:
+        print_exc()
+        input("\nPress return to exit.")
 
 
 if __name__ == "__main__":
