@@ -38,7 +38,7 @@ def get_new_batch_dir(batches: Path, timestamp: str) -> Path:
 
 def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
     new_email_paths = move_emails(original_email_paths, new_batch)
-    results = list(parse_emails(new_email_paths))
+    results = parse_emails(new_email_paths)
     output_csv_path = new_batch / f"{new_batch.name}.csv"
     output_fields = [f.name for f in fields(CitationRecord)]
     with output_csv_path.open("w", newline="") as fout:
