@@ -67,7 +67,8 @@ class CitationRecord:
     blurb: str
 
 
-def parse_emails(new_email_paths: list[Path]) -> Iterator[CitationRecord]:
+def parse_emails(new_email_paths: list[Path]) -> list[CitationRecord]:
+    results = []
     for email_path in new_email_paths:
         print()
         print("starting", email_path)
@@ -79,15 +80,18 @@ def parse_emails(new_email_paths: list[Path]) -> Iterator[CitationRecord]:
             print(" U:", c.url)
             print(" A:", c.authors)
             print(" =:", c.blurb)
-            yield CitationRecord(
-                email_file_name=email_path.name,
-                email_timestamp=email_timestamp,
-                query=query.text,
-                title=c.title,
-                url=c.url,
-                authors=c.authors,
-                blurb=c.blurb,
+            results.append(
+                CitationRecord(
+                    email_file_name=email_path.name,
+                    email_timestamp=email_timestamp,
+                    query=query.text,
+                    title=c.title,
+                    url=c.url,
+                    authors=c.authors,
+                    blurb=c.blurb,
+                )
             )
+    return results
 
 
 Tag = element.Tag
