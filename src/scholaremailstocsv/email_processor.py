@@ -7,6 +7,7 @@ from email import parser, policy, utils
 from pathlib import Path
 from pprint import pprint as pp
 from string import ascii_lowercase
+from traceback import print_exc
 from typing import Iterable, Iterator
 
 from bs4 import BeautifulSoup, element
@@ -72,25 +73,32 @@ def parse_emails(new_email_paths: list[Path]) -> list[CitationRecord]:
     for email_path in new_email_paths:
         print()
         print("starting", email_path)
-        citations, query, email_datetime = parse_email(email_path)
-        email_timestamp = email_datetime.astimezone().isoformat(sep=" ")[:19]
-        print("Q:", query.text)
-        for c in citations:
-            print("*", c.title)
-            print(" U:", c.url)
-            print(" A:", c.authors)
-            print(" =:", c.blurb)
-            results.append(
-                CitationRecord(
-                    email_file_name=email_path.name,
-                    email_timestamp=email_timestamp,
-                    query=query.text,
-                    title=c.title,
-                    url=c.url,
-                    authors=c.authors,
-                    blurb=c.blurb,
+        try:
+            citations, query, email_datetime = parse_email(email_path)
+            email_timestamp = email_datetime.astimezone().isoformat(sep=" ")[:19]
+            print("Q:", query.text)
+            for c in citations:
+                print("*", c.title)
+                print(" U:", c.url)
+                print(" A:", c.authors)
+                print(" =:", c.blurb)
+                results.append(
+                    CitationRecord(
+                        email_file_name=email_path.name,
+                        email_timestamp=email_timestamp,
+                        query=query.text,
+                        title=c.title,
+                        url=c.url,
+                        authors=c.authors,
+                        blurb=c.blurb,
+                    )
                 )
-            )
+        except Exception as e:
+            print_exc()
+            batch_dir = email_path.parent
+            error_dir = batch_dir / "errors"
+            error_dir.mkdir(exist_ok=True)
+            email_path.rename(error_dir / email_path.name)
     return results
 
 
