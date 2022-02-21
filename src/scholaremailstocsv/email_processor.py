@@ -1,4 +1,3 @@
-from os import sep
 import re
 from csv import DictWriter
 from dataclasses import asdict, dataclass, fields
@@ -6,6 +5,7 @@ from datetime import datetime
 from email import parser, policy, utils
 from pathlib import Path
 from pprint import pprint as pp
+from shutil import copyfile
 from string import ascii_lowercase
 from traceback import print_exc
 from typing import Iterable, Iterator
@@ -98,7 +98,9 @@ def parse_emails(new_email_paths: list[Path]) -> list[CitationRecord]:
             batch_dir = email_path.parent
             error_dir = batch_dir / "errors"
             error_dir.mkdir(exist_ok=True)
-            email_path.rename(error_dir / email_path.name)
+            error_email_path = error_dir / email_path.name
+            copyfile(email_path, error_email_path)
+            # email_path.rename(error_email_path)
     return results
 
 
