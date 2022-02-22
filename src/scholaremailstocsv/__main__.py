@@ -6,7 +6,7 @@ a script by running:
 
 from pathlib import Path
 from sys import argv, executable, path
-from textwrap import dedent
+
 from traceback import print_exc
 
 from . import __version__
@@ -14,24 +14,9 @@ from .email_processor import process_emails
 
 
 def main():
-    cwd = str(Path().resolve())
     here = Path(argv[0]).parent.resolve()
     while not here.is_dir():
         here = here.parent
-    print(
-        dedent(
-            f"""\
-            {cwd=}
-            {executable=}
-            {__package__=} (v{__version__})
-            {__name__=} @ {__file__}
-            {here=}
-            {argv=}
-            """
-        )
-    )
-    for p in path:
-        print(p)
     try:
         process_emails(here)
     except:

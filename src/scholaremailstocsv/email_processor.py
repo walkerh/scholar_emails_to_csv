@@ -1,30 +1,42 @@
+import logging
 import re
 from csv import DictWriter
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from email import parser, policy, utils
 from pathlib import Path
-from pprint import pprint as pp
 from shutil import copyfile
 from string import ascii_lowercase
-from traceback import print_exc
-from typing import Iterable, Iterator
+from sys import executable, stderr
+from typing import Iterable, Iterator, Optional
 
+import coloredlogs
 from bs4 import BeautifulSoup, element
 from extract_msg import openMsg
+from humanfriendly.terminal import terminal_supports_colors
 from requests import head
 from rtfparse.parser import Rtf_Parser
 from rtfparse.renderers import de_encapsulate_html
 from yarl import URL
 
+from . import __version__
+
+
+LOG_FILE_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+STDERR_LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+logger = logging.getLogger(__name__)
+
 
 def process_emails(here: Path) -> None:
     assert here.is_dir(), here
-    original_email_paths = list(here.glob("*.eml")) + list(here.glob("*.msg"))
     batches = here / "batches"
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H%M")
     new_batch = get_new_batch_dir(batches, timestamp)
+    log_file_path = configure_logging(new_batch)
+    log_startup(here, log_file_path)
+    logger.info(f"batch_dir={new_batch!s}")
+    original_email_paths = list(here.glob("*.eml")) + list(here.glob("*.msg"))
     do_batch(original_email_paths, new_batch)
 
 
@@ -37,6 +49,62 @@ def get_new_batch_dir(batches: Path, timestamp: str) -> Path:
     raise RuntimeError(f"too many batches with {timestamp=}")
 
 
+def configure_logging(new_batch: Path) -> str:
+    set_logging_level(None, logging.NOTSET)
+    set_logging_level("rtfparse", logging.INFO)
+    set_logging_level("urllib3.connectionpool", logging.INFO)
+    plain_log_formatter = logging.Formatter(LOG_FILE_FORMAT)
+    stderr_log_formatter = (
+        coloredlogs.ColoredFormatter(STDERR_LOG_FORMAT)
+        if terminal_supports_colors(stderr)
+        else plain_log_formatter
+    )
+    stderr_handler = coloredlogs.StandardErrorHandler(level=logging.INFO)
+    stderr_handler.setFormatter(stderr_log_formatter)
+    stderr_handler.addFilter(stderr_handler_filter)
+    file_path = new_batch / f"{new_batch.name}.log"
+    file_handler = logging.FileHandler(file_path)
+    file_handler.setLevel(logging.NOTSET)
+    file_handler.setFormatter(plain_log_formatter)
+    root_logger = logging.getLogger()
+    root_logger.addHandler(stderr_handler)
+    root_logger.addHandler(file_handler)
+    return file_path
+
+
+def set_logging_level(logger_name: Optional[str], level) -> None:
+    target_logger = logging.getLogger(logger_name)
+    target_logger.setLevel(level)
+
+
+CHATTY_LOGGERS = set(
+    [
+        "extract_msg.message_base",
+        "rtfparse.parser",
+        "rtfparse.renderers.de_encapsulate_html",
+    ]
+)
+
+
+def stderr_handler_filter(record: logging.LogRecord) -> bool:
+    if record.name in CHATTY_LOGGERS:
+        if record.levelno <= logging.INFO:
+            return False
+    return True
+
+
+def log_startup(here: Path, log_file_path: str) -> None:
+    # breakpoint()
+    cwd = str(Path().resolve())
+    logger.info(f"{__package__} version={__version__}")
+    logger.info(f"logging to '{log_file_path}'")
+    logger.info(f"{cwd=}")
+    logger.info(f"here={here!s}")
+    logger.info(f"{executable=}")
+    logger.info(f"{__name__=}")
+    logger.info(f"{__file__=}")
+
+
 def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
     new_email_paths = move_emails(original_email_paths, new_batch)
     results = parse_emails(new_email_paths)
@@ -47,6 +115,7 @@ def do_batch(original_email_paths: list[Path], new_batch: Path) -> None:
         writer.writeheader()
         for result in results:
             writer.writerow(asdict(result))
+    logger.info(f"wrote {output_csv_path}")
 
 
 def move_emails(original_email_paths, new_batch):
@@ -70,18 +139,18 @@ class CitationRecord:
 
 def parse_emails(new_email_paths: list[Path]) -> list[CitationRecord]:
     results = []
+    error_paths = []
     for email_path in new_email_paths:
-        print()
-        print("starting", email_path)
+        logger.info(f"STARTING {email_path.name}")
         try:
             citations, query, email_datetime = parse_email(email_path)
             email_timestamp = email_datetime.astimezone().isoformat(sep=" ")[:19]
-            print("Q:", query.text)
+            logger.debug(f"Q: {query.text}")
             for c in citations:
-                print("*", c.title)
-                print(" U:", c.url)
-                print(" A:", c.authors)
-                print(" =:", c.blurb)
+                logger.debug(f"* {c.title}")
+                logger.debug(f" U: {c.url}")
+                logger.debug(f" A: {c.authors}")
+                logger.debug(f" =: {c.blurb}")
                 results.append(
                     CitationRecord(
                         email_file_name=email_path.name,
@@ -94,13 +163,18 @@ def parse_emails(new_email_paths: list[Path]) -> list[CitationRecord]:
                     )
                 )
         except Exception as e:
-            print_exc()
+            logger.exception(email_path.name)
             batch_dir = email_path.parent
             error_dir = batch_dir / "errors"
             error_dir.mkdir(exist_ok=True)
             error_email_path = error_dir / email_path.name
+            error_paths.append(email_path)
             copyfile(email_path, error_email_path)
-            # email_path.rename(error_email_path)
+        else:
+            logger.info(f"number of citations={len(citations)}")
+    logger.info(f"finished with {len(results)} results")
+    if error_paths:
+        logger.error(f"encountered {len(error_paths)} errors")
     return results
 
 
@@ -149,8 +223,8 @@ def clean_url(bad_url: str) -> str:
     while u.host != "scholar.google.com":
         response = head(str(u))
         if response.status_code != 302:
-            print(response)
-            print(response.headers)
+            logger.debug(response)
+            logger.debug(response.headers)
             raise ValueError(response)
         u = URL(response.headers["Location"])
     assert u.host == "scholar.google.com", str(u)
@@ -192,13 +266,12 @@ def parse_msg_file(email_path: Path) -> tuple[str, str]:
 def parse_html(email_path, html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     elements = list(generate_elements(soup))
-    print([e.name for e in elements])
+    logger.debug([e.name for e in elements])
     email_path.with_suffix(".html").write_text(soup.prettify(), encoding="utf-8")
     citations: list[Citation]
     query: Query
     *citations, query = generate_blocks(elements)
-    pp([type(b) for b in citations])
-    print(type(query))
+    logger.debug(f"citation_types={[type(b) for b in citations]}")
     if not all(isinstance(b, Citation) for b in citations):
         raise ValueError(citations)
     if not isinstance(query, Query):
@@ -226,11 +299,9 @@ def generate_blocks(elements: Iterable[Tag]) -> Iterator[Block]:
             yield Query(first)
             return  # Stop parsing.
         else:
-            print("mystery element")
-            print(first)
-            print()
-            print(first.parent.prettify())
-            print()
+            logger.warning("mystery element")
+            logger.warning(first.name)
+            logger.warning(first.parent.prettify())
             raise ValueError
 
 
