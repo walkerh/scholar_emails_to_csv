@@ -16,7 +16,7 @@ from extract_msg import openMsg
 from humanfriendly.terminal import terminal_supports_colors
 from requests import head
 from rtfparse.parser import Rtf_Parser
-from rtfparse.renderers import de_encapsulate_html
+from rtfparse.renderers.html_decapsulator import HTML_Decapsulator
 from yarl import URL
 
 from . import __version__
@@ -81,7 +81,7 @@ CHATTY_LOGGERS = set(
     [
         "extract_msg.message_base",
         "rtfparse.parser",
-        "rtfparse.renderers.de_encapsulate_html",
+        "rtfparse.renderers.html_decapsulator.HTML_Decapsulator",
     ]
 )
 
@@ -256,7 +256,7 @@ def parse_msg_file(email_path: Path) -> tuple[str, str]:
     raw_html_path = email_path.with_suffix(".rtf.html")
     parser = Rtf_Parser(rtf_path=rtf_path)
     parsed = parser.parse_file()
-    renderer = de_encapsulate_html.De_encapsulate_HTML()
+    renderer = HTML_Decapsulator()
     with open(raw_html_path, mode="w", encoding="utf-8") as html_file:
         renderer.render(parsed, html_file)
     html_content = raw_html_path.read_text(encoding="utf-8")
